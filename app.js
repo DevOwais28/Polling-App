@@ -30,7 +30,7 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "https://polling-app-frontend-coral.vercel.app/",
+    origin: "https://polling-app-frontend-coral.vercel.app",
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -52,7 +52,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: "https://polling-app-frontend-coral.vercel.app/",
+  origin: "https://polling-app-frontend-coral.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
