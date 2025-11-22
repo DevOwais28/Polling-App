@@ -1,5 +1,6 @@
 import { Vote } from "../models/vote.js"
 import { Poll } from "../models/poll.js"
+import { User } from "../models/user.js"
 import { createNotification } from "./notification.js"
 
 const addVote = async (req, res) => {
@@ -96,12 +97,20 @@ const addVote = async (req, res) => {
         // Create notification for poll owner (if not voting on own poll)
         if (poll.createdBy.toString() !== userId) {
             try {
+                // Safely fetch voter details to get a proper display name
+                const voter = await User.findById(userId).select("name username email");
+                const voterName =
+                  voter?.name ||
+                  voter?.username ||
+                  voter?.email ||
+                  "Someone";
+
                 await createNotification({
                     recipient: poll.createdBy,
                     sender: userId,
                     type: 'poll_vote',
                     title: 'New Vote on Your Poll',
-                    message: `${req.user.name || req.user.username} voted on your poll "${poll.description}"`,
+                    message: `${voterName} voted on your poll "${poll.description}"`,
                     relatedPoll: pollId
                 });
             } catch (notificationError) {
