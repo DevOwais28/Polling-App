@@ -10,8 +10,14 @@ export const addComment = async (req, res) => {
       return res.send({ success: false, message: "Missing required fields" });
     }
 
+    const requestUserId = (req.user?.id || req.user?._id)?.toString();
+
+    if (!requestUserId) {
+      return res.status(401).send({ success: false, message: "Unauthorized" });
+    }
+
     const comment = await Comment.create({
-      userId: req.user.id,
+      userId: requestUserId,
       pollId,
       text,
     });
@@ -51,9 +57,11 @@ export const updateComment = async (req, res) => {
 
     if (!comment) return res.status(404).json({ success: false, message: "Comment not found" });
 
+    const requestUserId = (req.user?.id || req.user?._id)?.toString();
+
     // only comment owner can update
-    if (comment.userId.toString() !== req.user._id.toString()) {
-      return res.send({ success: false, message: "Unauthorized" });
+    if (!requestUserId || comment.userId.toString() !== requestUserId) {
+      return res.status(401).send({ success: false, message: "Unauthorized" });
     }
 
     comment.text = text;
@@ -76,8 +84,10 @@ export const deleteComment = async (req, res) => {
     if (!comment) return res.status(404).json({ success: false, message: "Comment not found" });
 
     // only comment owner can delete
-    if (comment.userId.toString() !== req.user._id.toString()) {
-      return res.send({ success: false, message: "Unauthorized" });
+    const requestUserId = (req.user?.id || req.user?._id)?.toString();
+
+    if (!requestUserId || comment.userId.toString() !== requestUserId) {
+      return res.status(401).send({ success: false, message: "Unauthorized" });
     }
 
     await comment.deleteOne();
