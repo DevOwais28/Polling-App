@@ -16,11 +16,14 @@ export const addComment = async (req, res) => {
       return res.status(401).send({ success: false, message: "Unauthorized" });
     }
 
-    const comment = await Comment.create({
+    let comment = await Comment.create({
       userId: requestUserId,
       pollId,
       text,
     });
+
+    // Populate user info so frontend can immediately show name/avatar
+    comment = await comment.populate("userId");
 
     return res.send({ success: true, message: "Comment added", comment });
   } catch (error) {
@@ -67,7 +70,10 @@ export const updateComment = async (req, res) => {
     comment.text = text;
     await comment.save();
 
-   return res.send({ success: true, message: "Comment updated", comment });
+    // Re-populate user info so updated comment still has user details
+    const populatedComment = await comment.populate("userId");
+
+   return res.send({ success: true, message: "Comment updated", comment: populatedComment });
   } catch (error) {
     console.error(error);
     return res.send({ success: false, message: "Server error" });
