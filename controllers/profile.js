@@ -343,7 +343,7 @@ export const getProfilesBySearch = async(req,res) =>{
 export const getUserProfile = async(req,res) =>{
   try {
     const { userId } = req.params;
-    const currentUserId = req.user._id;
+    const currentUserId = req.user.id;
     
     const user = await User.findById(userId).select('-password');
     
@@ -387,7 +387,7 @@ export const getUserProfile = async(req,res) =>{
 export const getUserPrivatePolls = async(req,res) =>{
   try {
     const { userId } = req.params;
-    const currentUserId = req.user._id;
+    const currentUserId = req.user.id;
     
     // Only allow users to see their own private polls
     if (userId !== currentUserId.toString()) {
