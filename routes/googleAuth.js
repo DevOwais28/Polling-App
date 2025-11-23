@@ -35,6 +35,8 @@ router.get(
           name: user.name,
           email: user.email,
           avatar: user.avatar,
+          username: user.username,              // ensure username is available on frontend
+          isProfileComplete: user.isProfileComplete, // optional but useful
           isNewUser: isNewUser || false
         },
         token,
