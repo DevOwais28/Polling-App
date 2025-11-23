@@ -340,49 +340,51 @@ export const getProfilesBySearch = async(req,res) =>{
   }
 }
 
-export const getUserProfile = async(req,res) =>{
+export const getUserProfile = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const currentUserId = req.user.id;
-    
-    const user = await User.findById(userId).select('-password');
-    
+    const { userId } = req.params;                // Profile OWNER
+    const currentUserId = req.user.id;            // VISITOR
+
+    const user = await User.findById(userId).select("-password");
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    // Create notification for profile visit (if not visiting own profile)
+    // Create notification ONLY when someone ELSE visits profile
     if (userId !== currentUserId.toString()) {
       try {
+        // Fetch VISITOR details
+        const visitor = await User.findById(currentUserId).select("name username");
+
         await createNotification({
-          recipient: userId,
-          sender: currentUserId,
-          type: 'profile_visit',
-          title: 'Profile Visit',
-          message: `${user.name || user.username} visited your profile`,
+          recipient: userId,                     // profile owner
+          sender: currentUserId,                 // visitor
+          type: "profile_visit",
+          title: "Profile Visit",
+          message: `${visitor.name || visitor.username} visited your profile`,
         });
       } catch (notificationError) {
-        console.error('Failed to create notification:', notificationError);
-        // Don't fail the profile view if notification fails
+        console.error("Failed to create notification:", notificationError);
       }
     }
 
     res.json({
       success: true,
-      user
+      user,
     });
-     
+
   } catch (error) {
     console.error("Get user profile error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error during profile retrieval"
+      message: "Server error during profile retrieval",
     });
   }
-}
+};
 
 export const getUserPrivatePolls = async(req,res) =>{
   try {
