@@ -362,7 +362,7 @@ export const getUserProfile = async(req,res) =>{
           sender: currentUserId,
           type: 'profile_visit',
           title: 'Profile Visit',
-          message: `${req.user.name || req.user.username} visited your profile`,
+          message: `${user.name || user.username} visited your profile`,
         });
       } catch (notificationError) {
         console.error('Failed to create notification:', notificationError);
