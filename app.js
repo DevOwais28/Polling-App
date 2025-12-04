@@ -19,6 +19,7 @@ import commentRoutes from "./routes/comment.js";
 import profileRoutes from "./routes/profile.js";
 import notificationRoutes from "./routes/notification.js";
 import googleauthRoutes from "./routes/googleAuth.js";
+import chatbotRoutes from "./routes/chatbot.js";
 
 const envMode = process.env.NODE_ENV?.trim() || 'DEVELOPMENT';
 const port = process.env.PORT || 3000;
@@ -30,7 +31,7 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "https://polling-app-frontend-coral.vercel.app",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -52,7 +53,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: "https://polling-app-frontend-coral.vercel.app",
+  origin: "http://localhost:5173",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
@@ -68,6 +69,7 @@ app.use("/api/votes", authenticate, voteRoutes);
 app.use("/api/comments", authenticate, commentRoutes);
 app.use("/api/profile", authenticate, profileRoutes);
 app.use("/api/notifications", authenticate, notificationRoutes);
+app.use("/api/chat", chatbotRoutes);
 
 // Error handler
 app.use(errorMiddleware);
