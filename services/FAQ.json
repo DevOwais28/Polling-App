@@ -1,0 +1,142 @@
+[
+  {
+    "id": "faq_services",
+    "metadata": {
+      "topic": "services",
+      "text": "WePollin is an interactive polling application that allows users to create, share, and participate in various types of polls. It's user-friendly and accessible on multiple devices."
+    }
+  },
+  {
+    "id": "faq_pricing",
+    "metadata": {
+      "topic": "pricing",
+      "text": "WePollin is completely free to use for all basic features. Premium features may be introduced in the future, but core functionality will remain free."
+    }
+  },
+  {
+    "id": "faq_features_create",
+    "metadata": {
+      "topic": "features",
+      "text": "You can create polls with multiple question types, including multiple choice, rating scales, open-ended questions, and add images or media. You can also schedule polls for future dates."
+    }
+  },
+  {
+    "id": "faq_features_analytics",
+    "metadata": {
+      "topic": "features",
+      "text": "WePollin provides real-time analytics with live results tracking, voter demographics, response rate monitoring, and export options to CSV or Excel."
+    }
+  },
+  {
+    "id": "faq_features_privacy",
+    "metadata": {
+      "topic": "features",
+      "text": "WePollin allows public or private polls, password protection for sensitive polls, voting limits per person/device, and options to allow or restrict multiple responses."
+    }
+  },
+  {
+    "id": "faq_features_sharing",
+    "metadata": {
+      "topic": "features",
+      "text": "You can share polls via direct links, embed on websites, social media integration, and QR codes for easy access."
+    }
+  },
+  {
+    "id": "faq_features_mobile",
+    "metadata": {
+      "topic": "features",
+      "text": "WePollin is fully mobile-optimized, responsive, touch-friendly, works across all devices, and requires no app installation."
+    }
+  },
+  {
+    "id": "faq_account_create",
+    "metadata": {
+      "topic": "account",
+      "text": "To create an account, click 'Sign Up', enter your email and password, verify your email, and complete your profile setup."
+    }
+  },
+  {
+    "id": "faq_account_reset",
+    "metadata": {
+      "topic": "account",
+      "text": "If you forgot your password, click 'Forgot Password', enter your registered email, follow the email link, and set a new password."
+    }
+  },
+  {
+    "id": "faq_polls_create",
+    "metadata": {
+      "topic": "polls",
+      "text": "To create a new poll, log in, click 'Create Poll', enter your question and answers, configure poll settings, and click 'Create'."
+    }
+  },
+  {
+    "id": "faq_polls_types",
+    "metadata": {
+      "topic": "polls",
+      "text": "You can create multiple types of polls: multiple choice, single selection, rating scale, open-ended, image-based, and time-based polls."
+    }
+  },
+  {
+    "id": "faq_participate_vote",
+    "metadata": {
+      "topic": "participation",
+      "text": "To vote in a poll, click the poll link, select your preferred answer(s), and click 'Submit'. You can change your vote if the poll is still active."
+    }
+  },
+  {
+    "id": "faq_privacy_data",
+    "metadata": {
+      "topic": "privacy",
+      "text": "Your data is secure. All information is encrypted and handled according to data protection regulations."
+    }
+  },
+  {
+    "id": "faq_privacy_private",
+    "metadata": {
+      "topic": "privacy",
+      "text": "You can make polls private so only people with the direct link can access them."
+    }
+  },
+  {
+    "id": "faq_troubleshoot_email",
+    "metadata": {
+      "topic": "troubleshooting",
+      "text": "If you are not receiving the verification email, check your spam folder, confirm your email address, wait a few minutes, or contact support."
+    }
+  },
+  {
+    "id": "faq_troubleshoot_poll",
+    "metadata": {
+      "topic": "troubleshooting",
+      "text": "If a poll isn't loading, check your internet connection, refresh the page, clear browser cache, or try a different browser."
+    }
+  },
+  {
+    "id": "faq_features_results",
+    "metadata": {
+      "topic": "features",
+      "text": "View poll results in real-time with our live updating system."
+    }
+  },
+  {
+    "id": "faq_features_analytics_dashboard",
+    "metadata": {
+      "topic": "features",
+      "text": "Get detailed insights about poll responses with our analytics dashboard."
+    }
+  },
+  {
+    "id": "faq_features_share_options",
+    "metadata": {
+      "topic": "features",
+      "text": "Share polls easily via social media or direct link."
+    }
+  },
+  {
+    "id": "faq_support_feature_request",
+    "metadata": {
+      "topic": "support",
+      "text": "You can submit feature requests through our website or by emailing features@wepollin.com."
+    }
+  }
+]
