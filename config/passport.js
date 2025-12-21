@@ -7,7 +7,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "https://polling-app-production-142d.up.railway.app/api/auth/google/callback"
+      callbackURL: "https://polling-app-production-855d.up.railway.app/api/auth/google/callback"
     },
     async (accessToken, refreshToken, profile, done) => {
 
@@ -34,5 +34,6 @@ passport.use(
 );
 
 export default passport;
+
 
 
