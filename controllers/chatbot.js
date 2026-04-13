@@ -1,22 +1,30 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 import { pipeline } from "@xenova/transformers";
 
-// Init Pinecone
+// ------------------------
+// INIT
+// ------------------------
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_KEY,
 });
+
 const index = pinecone.index("service-bot");
 
-// Load local MiniLM embedder
 let extractor = null;
+
 async function getEmbedder() {
   if (!extractor) {
-    extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+    extractor = await pipeline(
+      "feature-extraction",
+      "Xenova/all-MiniLM-L6-v2"
+    );
   }
   return extractor;
 }
 
-// Clean text before returning
+// ------------------------
+// HELPERS
+// ------------------------
 function clean(text) {
   return text
     .replace(/#+/g, "")
@@ -26,12 +34,11 @@ function clean(text) {
     .trim();
 }
 
-// Extract first 1-2 sentences
 function extractAnswer(text, max = 2) {
   const sentences = text
     .split(/(?<=[.!?])\s+/)
     .map(s => s.trim())
-    .filter(s => s.length > 3);
+    .filter(Boolean);
 
   return sentences.slice(0, max).join(" ");
 }
@@ -48,87 +55,75 @@ export const handleQuery = async (req, res) => {
     }
 
     const normalized = query.trim().toLowerCase();
+    const q = normalized;
 
     // ------------------------
-    // 1. GREETING HANDLING (FIRST PRIORITY)
+    // 1. SMALL TALK / GREETING (BLOCK BEFORE EVERYTHING)
     // ------------------------
-    if (/^(hi|hello|hey|salam|assalam.*|assalamu.*)$/i.test(normalized)) {
+    if (/^(hi|hello|hey|yo|salam|assalam.*|assalamu.*)$/i.test(q)) {
       return res.json({
         answer:
-          "Hi! I'm the WePollin assistant. I can help you with features, polls, pricing, privacy, and how to use WePollin.",
+          "Hey! 👋 I’m the WePollin assistant. Ask me about polls, features, pricing, or support.",
+      });
+    }
+
+    if (/^(bye|goodbye|allah hafiz|see you|ciao)$/i.test(q)) {
+      return res.json({
+        answer: "Goodbye! 👋 Feel free to ask anytime about WePollin.",
       });
     }
 
     // ------------------------
-    // 2. FAREWELL HANDLING
+    // 2. DIRECT WEPPOLLIN QUESTION
     // ------------------------
-    if (/^(bye|goodbye|allah hafiz|ciao|see you)[!. ]*$/i.test(normalized)) {
+    if (q.includes("wepollin")) {
       return res.json({
         answer:
-          "Goodbye! If you have more questions about WePollin, feel free to ask anytime.",
+          "WePollin is an interactive polling application that lets users create, share, and participate in polls with real-time results, analytics, and privacy controls.",
       });
     }
 
     // ------------------------
-    // 3. DIRECT WEPPOLLIN QUESTION (SAFE)
-    // ------------------------
-    if (normalized.includes("wepollin")) {
-      return res.json({
-        answer:
-          "WePollin is an interactive polling application that lets you create, share, and participate in polls with real-time results, analytics, and privacy controls.",
-      });
-    }
-
-    // ------------------------
-    // 4. EMBEDDING (FIXED - NO BIAS)
+    // 3. EMBEDDING (NO BIAS)
     // ------------------------
     const embedder = await getEmbedder();
-
-    // IMPORTANT FIX: no forced context injection
-    const enhanced = query;
-
-    const output = await embedder(enhanced, {
+    const output = await embedder(q, {
       pooling: "mean",
       normalize: true,
     });
 
     let vector;
+
     if (Array.isArray(output)) {
       vector = output[0];
-    } else if (output && output.data) {
+    } else if (output?.data) {
       vector = Array.from(output.data);
     } else {
       vector = output;
     }
 
     if (!Array.isArray(vector) || vector.length === 0) {
-      throw new Error("Failed to create embedding vector");
+      throw new Error("Embedding failed");
     }
 
     // ------------------------
-    // 5. INTENT FILTERING
+    // 4. INTENT FILTERING
     // ------------------------
-    const q = query.toLowerCase();
-    let filter = undefined;
+    let filter;
 
-    if (/feature/.test(q)) {
-      filter = { topic: "features" };
-    } else if (/price|pricing|cost|free|paid|subscription/.test(q)) {
+    if (/feature/.test(q)) filter = { topic: "features" };
+    else if (/price|pricing|cost|free|paid/.test(q))
       filter = { topic: "pricing" };
-    } else if (/account|sign ?up|login|log in|password/.test(q)) {
-      filter = { topic: "account" };
-    } else if (/poll/.test(q)) {
-      filter = { topic: "polls" };
-    } else if (/privacy|data|secure|security/.test(q)) {
-      filter = { topic: "privacy" };
-    } else if (/trouble|error|issue|problem|not working/.test(q)) {
+    else if (/account|login|sign/.test(q)) filter = { topic: "account" };
+    else if (/poll/.test(q)) filter = { topic: "polls" };
+    else if (/privacy|secure|data/.test(q)) filter = { topic: "privacy" };
+    else if (/error|issue|problem/.test(q))
       filter = { topic: "troubleshooting" };
-    } else if (/support|help|contact/.test(q)) {
+    else if (/support|help|contact/.test(q))
       filter = { topic: "support" };
-    }
 
     // ------------------------
-    // 6. PINECONE QUERY
+    // 5. PINECONE QUERY
     // ------------------------
     const result = await index.query({
       vector,
@@ -137,37 +132,51 @@ export const handleQuery = async (req, res) => {
       ...(filter ? { filter } : {}),
     });
 
-    const matches = Array.isArray(result?.matches) ? result.matches : [];
+    const matches = result?.matches || [];
 
-    if (matches.length === 0) {
+    if (!matches.length) {
       return res.json({
-        answer: "I couldn't find an answer in the WePollin knowledge base.",
+        answer: "I couldn't find anything in the WePollin knowledge base.",
       });
     }
 
-    // Sort best match
     const sorted = matches
       .filter(m => m?.metadata?.text)
       .sort((a, b) => (b.score || 0) - (a.score || 0));
 
-    if (sorted.length === 0) {
+    if (!sorted.length) {
       return res.json({
-        answer: "I couldn't find an answer in the WePollin knowledge base.",
+        answer: "I couldn't find anything in the WePollin knowledge base.",
       });
     }
 
     const best = sorted[0];
-    const score = typeof best.score === "number" ? best.score : 0;
+    const score = best?.score || 0;
 
     // ------------------------
-    // 7. RELEVANCE CHECK
+    // 6. STRONG RELEVANCE THRESHOLD (FIXED)
     // ------------------------
-    const RELEVANCE_THRESHOLD = 0.4;
+    const RELEVANCE_THRESHOLD = 0.65;
 
     if (score < RELEVANCE_THRESHOLD) {
       return res.json({
         answer:
-          "I can only answer questions related to WePollin. Please ask about features, polls, pricing, privacy, or support.",
+          "I can only answer WePollin-related questions. Please ask about features, polls, pricing, or support.",
+      });
+    }
+
+    // ------------------------
+    // 7. BLOCK GENERIC DOC TAKEOVER (CRITICAL FIX)
+    // ------------------------
+    const text = best?.metadata?.text?.toLowerCase() || "";
+
+    const isGenericDoc =
+      text.includes("wepollin is an interactive polling application");
+
+    if (isGenericDoc && !q.includes("what is wepollin")) {
+      return res.json({
+        answer:
+          "Ask something specific about WePollin like features, polls, pricing, or support.",
       });
     }
 
