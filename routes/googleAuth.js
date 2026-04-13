@@ -43,12 +43,12 @@ router.get(
       };
       
       const encoded = encodeURIComponent(JSON.stringify(finalData));
-      
+      const clientUrl = (process.env.CLIENT_URL || "").trim();
       // Redirect to auth callback route with auth data
-      res.redirect(`${process.env.CLIENT_URL}/auth/callback?auth=${encoded}`);
+      res.redirect(`${clientUrl}/auth/callback?auth=${encoded}`);
     } catch (error) {
       console.error('Google auth error:', error);
-      res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
+      res.redirect(`${clientUrl}/login?error=authentication_failed`);
     }
   }
 );
