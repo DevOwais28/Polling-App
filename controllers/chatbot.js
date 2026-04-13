@@ -37,7 +37,7 @@ function extractAnswer(text, max = 2) {
 }
 
 // ------------------------
-// MAIN PINECONE QUERY HANDLER
+// MAIN HANDLER
 // ------------------------
 export const handleQuery = async (req, res) => {
   try {
@@ -49,33 +49,49 @@ export const handleQuery = async (req, res) => {
 
     const normalized = query.trim().toLowerCase();
 
-    // Quick responses for simple greetings / farewells
-    if (/^(hi|hello|hey|salam|assalam ?o ?alaikum|assalamu ?alaikum)[!. ]*$/i.test(normalized)) {
+    // ------------------------
+    // 1. GREETING HANDLING (FIRST PRIORITY)
+    // ------------------------
+    if (/^(hi|hello|hey|salam|assalam.*|assalamu.*)$/i.test(normalized)) {
       return res.json({
-        answer: "Hi! I'm the WePollin assistant. I can help you with questions about features, polls, pricing, privacy, and how to use WePollin.",
+        answer:
+          "Hi! I'm the WePollin assistant. I can help you with features, polls, pricing, privacy, and how to use WePollin.",
       });
     }
 
+    // ------------------------
+    // 2. FAREWELL HANDLING
+    // ------------------------
     if (/^(bye|goodbye|allah hafiz|ciao|see you)[!. ]*$/i.test(normalized)) {
       return res.json({
-        answer: "Goodbye! If you have more questions about WePollin later, just open the chat again.",
+        answer:
+          "Goodbye! If you have more questions about WePollin, feel free to ask anytime.",
       });
     }
 
-    // If the user explicitly asks about WePollin in general, answer directly
+    // ------------------------
+    // 3. DIRECT WEPPOLLIN QUESTION (SAFE)
+    // ------------------------
     if (normalized.includes("wepollin")) {
       return res.json({
         answer:
-          "WePollin is an interactive polling application that lets you create, share, and participate in polls with real-time results, rich analytics, and privacy controls—all in a simple, mobile-friendly interface.",
+          "WePollin is an interactive polling application that lets you create, share, and participate in polls with real-time results, analytics, and privacy controls.",
       });
     }
 
-    // Embed query
+    // ------------------------
+    // 4. EMBEDDING (FIXED - NO BIAS)
+    // ------------------------
     const embedder = await getEmbedder();
-    const enhanced = `User question about WePollin: ${query}`;
-    const output = await embedder(enhanced, { pooling: "mean", normalize: true });
 
-    // Handle different output shapes from the embedder
+    // IMPORTANT FIX: no forced context injection
+    const enhanced = query;
+
+    const output = await embedder(enhanced, {
+      pooling: "mean",
+      normalize: true,
+    });
+
     let vector;
     if (Array.isArray(output)) {
       vector = output[0];
@@ -89,7 +105,9 @@ export const handleQuery = async (req, res) => {
       throw new Error("Failed to create embedding vector");
     }
 
-    // Build a simple topic-aware filter based on query keywords
+    // ------------------------
+    // 5. INTENT FILTERING
+    // ------------------------
     const q = query.toLowerCase();
     let filter = undefined;
 
@@ -109,7 +127,9 @@ export const handleQuery = async (req, res) => {
       filter = { topic: "support" };
     }
 
-    // Query Pinecone
+    // ------------------------
+    // 6. PINECONE QUERY
+    // ------------------------
     const result = await index.query({
       vector,
       topK: 5,
@@ -121,39 +141,43 @@ export const handleQuery = async (req, res) => {
 
     if (matches.length === 0) {
       return res.json({
-        answer: "I couldn't find an answer for that in the knowledge base.",
+        answer: "I couldn't find an answer in the WePollin knowledge base.",
       });
     }
 
-    // Sort by score and pick the best
+    // Sort best match
     const sorted = matches
-      .filter(m => m && m.metadata && m.metadata.text)
+      .filter(m => m?.metadata?.text)
       .sort((a, b) => (b.score || 0) - (a.score || 0));
 
     if (sorted.length === 0) {
       return res.json({
-        answer: "I couldn't find an answer for that in the knowledge base.",
+        answer: "I couldn't find an answer in the WePollin knowledge base.",
       });
     }
 
     const best = sorted[0];
-
-    // If the best match is not similar enough, treat it as out-of-domain
     const score = typeof best.score === "number" ? best.score : 0;
-    const RELEVANCE_THRESHOLD = 0.4; // tune as needed
+
+    // ------------------------
+    // 7. RELEVANCE CHECK
+    // ------------------------
+    const RELEVANCE_THRESHOLD = 0.4;
 
     if (score < RELEVANCE_THRESHOLD) {
       return res.json({
         answer:
-          "I can only answer questions about WePollin (its features, polls, pricing, privacy, and how to use it). Please ask something related to WePollin.",
+          "I can only answer questions related to WePollin. Please ask about features, polls, pricing, privacy, or support.",
       });
     }
 
+    // ------------------------
+    // 8. FINAL ANSWER
+    // ------------------------
     const cleaned = clean(best.metadata.text);
     const answer = extractAnswer(cleaned, 2);
 
     return res.json({ answer });
-
   } catch (err) {
     console.error("Query error:", err);
     return res.status(500).json({ error: "Server error" });
