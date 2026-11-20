@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
-import cors from 'cors';
+import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./lib/db.js";
@@ -10,7 +10,6 @@ import passport from "./config/passport.js";
 import authenticate from "./middlewares/authentication.js";
 import { errorMiddleware } from "./middlewares/error.js";
 import { startPollExpiryChecker } from "./jobs/pollExpiryNotifier.js";
-
 
 // Routes
 import pollRoutes from "./routes/poll.js";
@@ -22,9 +21,9 @@ import notificationRoutes from "./routes/notification.js";
 import googleauthRoutes from "./routes/googleAuth.js";
 import chatbotRoutes from "./routes/chatbot.js";
 
-const envMode = process.env.NODE_ENV?.trim() || 'DEVELOPMENT';
+const envMode = process.env.NODE_ENV?.trim() || "DEVELOPMENT";
 const port = process.env.PORT || 3000;
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/PollingApp';
+const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/PollingApp";
 
 const app = express();
 const server = http.createServer(app);
@@ -32,36 +31,40 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "https://polling-app-frontend-coral.vercel.app",
+    origin: "https://vercel.app",
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 setupIO(io);
 
 // Connect DB
 connectDB(mongoURI).then(() => {
-  // Connected to DB
-  startPollExpiryChecker(); // Start the expiry checker
+  startPollExpiryChecker();
 });
 
 // Middleware
-app.use(helmet({
-  contentSecurityPolicy: envMode !== "DEVELOPMENT",
-  crossOriginEmbedderPolicy: envMode !== "DEVELOPMENT",
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: envMode !== "DEVELOPMENT",
+    crossOriginEmbedderPolicy: envMode !== "DEVELOPMENT",
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors({
-  origin: "https://polling-app-frontend-coral.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "https://vercel.app",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+app.use(passport.initialize());
 
 // Routes
-app.get('/', (req, res) => res.send("Hello World"));
-
+app.get("/", (req, res) => res.send("Hello World"));
 app.use("/api/auth", googleauthRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/polls", authenticate, pollRoutes);
@@ -71,11 +74,10 @@ app.use("/api/profile", authenticate, profileRoutes);
 app.use("/api/notifications", authenticate, notificationRoutes);
 app.use("/api/chat", chatbotRoutes);
 
-app.use(passport.initialize());
-
 // Error handler
 app.use(errorMiddleware);
 
-// 🚀 Start the correct server (Express + Socket.IO)
-server.listen(port)
-
+// Start Express + Socket.IO server
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on port ${port}`);
+});
