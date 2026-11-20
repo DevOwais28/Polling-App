@@ -1,12 +1,13 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import {User} from "../models/user.js";
+import { env } from "cloudflare:workers";
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
       callbackURL: "https://polling-app-production-a6f5.up.railway.app/api/auth/google/callback"
     },
     async (accessToken, refreshToken, profile, done) => {
