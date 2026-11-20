@@ -1,48 +1,83 @@
-import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../models/user.js";
+import "dotenv/config";
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import http from "http";
+import { Server } from "socket.io";
+import { connectDB } from "./lib/db.js";
+import { setupIO } from "./socket.js";
+import passport from "./config/passport.js";
+import authenticate from "./middlewares/authentication.js";
+import { errorMiddleware } from "./middlewares/error.js";
+import { startPollExpiryChecker } from "./jobs/pollExpiryNotifier.js";
 
-let isInitialized = false;
+// Routes
+import pollRoutes from "./routes/poll.js";
+import voteRoutes from "./routes/vote.js";
+import userRoutes from "./routes/user.js";
+import commentRoutes from "./routes/comment.js";
+import profileRoutes from "./routes/profile.js";
+import notificationRoutes from "./routes/notification.js";
+import googleauthRoutes from "./routes/googleAuth.js";
+import chatbotRoutes from "./routes/chatbot.js";
 
-export function initPassport() {
-  if (isInitialized) return;
-  isInitialized = true;
+const envMode = process.env.NODE_ENV?.trim() || "DEVELOPMENT";
+const port = process.env.PORT || 3000;
+const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/PollingApp";
 
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL:
-          env.GOOGLE_CALLBACK_URL ||
-          process.env.GOOGLE_CALLBACK_URL ||
-          "https://polling-app.<YOUR-SUBDOMAIN>.workers.dev/api/auth/google/callback",
-      },
-      async (accessToken, refreshToken, profile, done) => {
-        try {
-          const googleId = profile.id;
-          const name = profile.displayName;
-          const email = profile.emails?.[0]?.value;
+const app = express();
+const server = http.createServer(app);
 
-          // ✅ Check if user already exists
-          let user = await User.findOne({ googleId });
-          let isNewUser = false;
-          if (!user) {
-            // ✅ Create new user
-            user = await User.create({
-              googleId,
-              name,
-              email,
-            });
-            isNewUser = true;
-          }
-          return done(null, { user, isNewUser }); // this goes to req.user
-        } catch (err) {
-          return done(err, null);
-        }
-      }
-    )
-  );
-}
+// Socket.io setup
+const io = new Server(server, {
+  cors: {
+    origin: "https://vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+setupIO(io);
 
-export default passport;
+// Connect DB
+connectDB(mongoURI).then(() => {
+  startPollExpiryChecker();
+});
+
+// Middleware
+app.use(
+  helmet({
+    contentSecurityPolicy: envMode !== "DEVELOPMENT",
+    crossOriginEmbedderPolicy: envMode !== "DEVELOPMENT",
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  cors({
+    origin: "https://vercel.app",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+app.use(passport.initialize());
+
+// Routes
+app.get("/", (req, res) => res.send("Hello World"));
+app.use("/api/auth", googleauthRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/polls", authenticate, pollRoutes);
+app.use("/api/votes", authenticate, voteRoutes);
+app.use("/api/comments", authenticate, commentRoutes);
+app.use("/api/profile", authenticate, profileRoutes);
+app.use("/api/notifications", authenticate, notificationRoutes);
+app.use("/api/chat", chatbotRoutes);
+
+// Error handler
+app.use(errorMiddleware);
+
+// Start Express + Socket.IO server
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on port ${port}`);
+});
