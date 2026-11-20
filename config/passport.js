@@ -1,7 +1,6 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { User } from "../models/user.js";
-import { env } from "cloudflare:workers";
 
 let isInitialized = false;
 
@@ -12,8 +11,8 @@ export function initPassport() {
   passport.use(
     new GoogleStrategy(
       {
-        clientID: env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET,
+        clientID: process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET,
         callbackURL:
           env.GOOGLE_CALLBACK_URL ||
           process.env.GOOGLE_CALLBACK_URL ||
