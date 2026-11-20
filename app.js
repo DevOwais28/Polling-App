@@ -11,6 +11,13 @@ import authenticate from "./middlewares/authentication.js";
 import { errorMiddleware } from "./middlewares/error.js";
 import { startPollExpiryChecker } from "./jobs/pollExpiryNotifier.js";
 import { httpServerHandler } from "cloudflare:node";
+import { initPassport } from "./config/passport.js";
+
+app.use((req, res, next) => {
+  initPassport();
+  next();
+});
+app.use(passport.initialize());
 
 
 // Routes
@@ -62,7 +69,6 @@ app.use(cors({
 
 // Routes
 app.get('/', (req, res) => res.send("Hello World"));
-app.use(passport.initialize());
 
 app.use("/api/auth", googleauthRoutes);
 app.use("/api/users", userRoutes);
