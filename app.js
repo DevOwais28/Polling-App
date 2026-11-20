@@ -10,14 +10,6 @@ import passport from "./config/passport.js";
 import authenticate from "./middlewares/authentication.js";
 import { errorMiddleware } from "./middlewares/error.js";
 import { startPollExpiryChecker } from "./jobs/pollExpiryNotifier.js";
-import { httpServerHandler } from "cloudflare:node";
-import { initPassport } from "./config/passport.js";
-
-app.use((req, res, next) => {
-  initPassport();
-  next();
-});
-app.use(passport.initialize());
 
 
 // Routes
@@ -31,7 +23,7 @@ import googleauthRoutes from "./routes/googleAuth.js";
 import chatbotRoutes from "./routes/chatbot.js";
 
 const envMode = process.env.NODE_ENV?.trim() || 'DEVELOPMENT';
-// const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/PollingApp';
 
 const app = express();
@@ -79,9 +71,11 @@ app.use("/api/profile", authenticate, profileRoutes);
 app.use("/api/notifications", authenticate, notificationRoutes);
 app.use("/api/chat", chatbotRoutes);
 
+app.use(passport.initialize());
+
 // Error handler
 app.use(errorMiddleware);
 
 // 🚀 Start the correct server (Express + Socket.IO)
-server.listen()
-export default httpServerHandler({ port: server.address().port });
+server.listen(port)
+
