@@ -1,0 +1,5 @@
+{
+  "name": "my-backend",
+  "main": "app.js",
+  "compatibility_date": "2025-01-01"
+}
