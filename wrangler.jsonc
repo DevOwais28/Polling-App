@@ -1,5 +1,7 @@
 {
-  "name": "my-backend",
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "polling-app",
   "main": "app.js",
-  "compatibility_date": "2025-01-01"
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"]
 }
